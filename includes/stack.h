@@ -8,13 +8,13 @@
 typedef struct Stack Stack;
 
 /* Creates a Stack for elements of size "element_size". */
-Stack *stack_new(int);
+Stack *stack_create(int);
 
 /* Erases every element in the Stack. */
 void stack_clear(Stack *);
 
 /* Destroys Stack. */
-void stack_delete(Stack *);
+void stack_destroy(Stack *);
 
 /* Inserts an element on top of the Stack. */
 void stack_push(Stack *, const void *);

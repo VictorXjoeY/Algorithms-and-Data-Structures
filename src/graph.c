@@ -4,14 +4,14 @@
 #include <stdio.h>
 #include <string.h>
 #include "utils.h"
-#include "list.h"
+#include "graph_list.h"
 #include "graph.h"
 
 // Vértice.
 struct Vertex{
 	int id; // Id do vértice.
-	List *adjacent; // Lista de arestas incidentes.
-	Vertex *previous; // Ponteiro para o vértice anterior.
+	GraphList *adjacent; // GraphLista de arestas incidentes.
+	Vertex *prev; // Ponteiro para o vértice anterior.
 	Vertex *next; // Ponteiro para o próximo vértice.
 	void *value; // Valor armazenado no vértice.
 };
@@ -21,11 +21,11 @@ struct Edge{
 	int id; // Id da aresta.
 	Vertex *vertex1; // Vértice final 1.
 	Vertex *vertex2; // Vértice final 2.
-	List *reference_list1; // Lista de adjacência do primeiro vértice final na qual sua referência se encontra.
-	List *reference_list2; // Lista de adjacência do segundo vértice final na qual sua referência se encontra.
+	GraphList *reference_list1; // GraphLista de adjacência do primeiro vértice final na qual sua referência se encontra.
+	GraphList *reference_list2; // GraphLista de adjacência do segundo vértice final na qual sua referência se encontra.
 	Node *reference1; // Referência direta para o nó da lista do primeiro vértice.
 	Node *reference2; // Referência direta para o nó da lista do segundo vértice.
-	Edge *previous; // Ponteiro para a aresta anterior.
+	Edge *prev; // Ponteiro para a aresta anterior.
 	Edge *next; // Ponteiro para a próxima aresta.
 	void *value; // Valor armazenado na aresta.
 };
@@ -76,14 +76,14 @@ void graph_clear(Graph *g){
 
 	// Removendo arestas.
 	while (aux_edge){
-		aux_edge = aux_edge->previous;
+		aux_edge = aux_edge->prev;
 		graph_remove_edge(g, g->last_edge);
 		g->last_edge = aux_edge;
 	}
 
 	// Removendo vértices.
 	while (aux_vertex){
-		aux_vertex = aux_vertex->previous;
+		aux_vertex = aux_vertex->prev;
 		graph_remove_vertex(g, g->last_vertex);
 		g->last_vertex = aux_vertex;
 	}
@@ -105,7 +105,7 @@ Vertex *graph_insert_vertex(Graph *g, const void *o){
 	if (g->n){
 		// Linkando o novo vértice.
 		g->last_vertex->next = graph_vertex_new(g->vertex_id, o, g->vertex_value_size);
-		g->last_vertex->next->previous = g->last_vertex;
+		g->last_vertex->next->prev = g->last_vertex;
 
 		// Atualizando o ponteiro para o último vértice.
 		g->last_vertex = g->last_vertex->next;
@@ -130,7 +130,7 @@ Edge *graph_insert_edge(Graph *g, Vertex *v, Vertex *w, const void *o){
 	if (g->m){
 		// Linkando a nova aresta.
 		g->last_edge->next = graph_edge_new(g->edge_id, v, w, o, g->edge_value_size);
-		g->last_edge->next->previous = g->last_edge;
+		g->last_edge->next->prev = g->last_edge;
 
 		// Atualizando o ponteiro para a última aresta.
 		g->last_edge = g->last_edge->next;
@@ -234,32 +234,32 @@ Edge **graph_edges(const Graph *g){
 
 void graph_remove_vertex(Graph *g, Vertex *v){
 	Node *next = list_get_next_node(v->adjacent, NULL);
-	Node *previous;
+	Node *prev;
 
 	// Enquanto tiver aresta.
 	while (next){
-		previous = next;
+		prev = next;
 		next = list_get_next_node(v->adjacent, next);
 
 		// Removendo a aresta.
-		graph_remove_edge(g, *((Edge **)list_get_element_ro(v->adjacent, previous)));
+		graph_remove_edge(g, *((Edge **)list_get_element_ro(v->adjacent, prev)));
 	}
 
 	// Deletando a lista de arestas incidentes.
-	list_delete(v->adjacent);
+	list_destroy(v->adjacent);
 
 	// Linkando o vértice anterior e o vértice seguinte.
-	if (v->previous and v->next){ // Se houver vértice anterior e vértice seguinte (vértice intermediário).
-		v->previous->next = v->next;
-		v->next->previous = v->previous;
+	if (v->prev and v->next){ // Se houver vértice anterior e vértice seguinte (vértice intermediário).
+		v->prev->next = v->next;
+		v->next->prev = v->prev;
 	}
-	else if (v->previous){ // Se houver apenas vértice anterior (último vértice).
-		g->last_vertex = v->previous;
-		v->previous->next = NULL;
+	else if (v->prev){ // Se houver apenas vértice anterior (último vértice).
+		g->last_vertex = v->prev;
+		v->prev->next = NULL;
 	}
 	else if (v->next){ // Se houver apenas vértice seguinte (primeiro vértice).
 		g->first_vertex = v->next;
-		v->next->previous = NULL;
+		v->next->prev = NULL;
 	}
 	else{ // Se não houver nem vértice anterior nem vértice seguinte (único vértice).
 		g->first_vertex = NULL;
@@ -280,17 +280,17 @@ void graph_remove_edge(Graph *g, Edge *e){
 	list_remove(e->reference_list2, e->reference2);
 
 	// Linkando a aresta anterior e a aresta seguinte.
-	if (e->previous and e->next){ // Se houver aresta anterior e aresta seguinte (aresta intermediária).
-		e->previous->next = e->next;
-		e->next->previous = e->previous;
+	if (e->prev and e->next){ // Se houver aresta anterior e aresta seguinte (aresta intermediária).
+		e->prev->next = e->next;
+		e->next->prev = e->prev;
 	}
-	else if (e->previous){ // Se houver apenas aresta anterior (última aresta).
-		g->last_edge = e->previous;
-		e->previous->next = NULL;
+	else if (e->prev){ // Se houver apenas aresta anterior (última aresta).
+		g->last_edge = e->prev;
+		e->prev->next = NULL;
 	}
 	else if (e->next){ // Se houver apenas aresta seguinte (primeira aresta).
 		g->first_edge = e->next;
-		e->next->previous = NULL;
+		e->next->prev = NULL;
 	}
 	else{ // Se não houver nem aresta anterior nem aresta seguinte (única aresta).
 		g->first_edge = NULL;
@@ -444,7 +444,7 @@ Vertex *graph_vertex_new(int id, const void *value, int vertex_value_size){
 	Vertex *v = (Vertex *)malloc(sizeof(Vertex));
 
 	// Criando uma nova lista de adjacência.
-	v->adjacent = list_new(sizeof(Edge *));
+	v->adjacent = list_create(sizeof(Edge *));
 
 	// Atribuindo um Id ao vértice.
 	v->id = id;
@@ -455,7 +455,7 @@ Vertex *graph_vertex_new(int id, const void *value, int vertex_value_size){
 
 	// Inicializando seus ponteiros com NULL.
 	v->next = NULL;
-	v->previous = NULL;
+	v->prev = NULL;
 
 	return v;
 }
@@ -484,7 +484,7 @@ Edge *graph_edge_new(int id, Vertex *v, Vertex *w, const void *value, int edge_v
 
 	// Inicializando seus ponteiros com NULL.
 	e->next = NULL;
-	e->previous = NULL;
+	e->prev = NULL;
 
 	return e;
 }

@@ -17,9 +17,7 @@
 
 typedef unsigned char bool;
 
-char *read_stretch(FILE *, char *);
-
-void swap(void *, int, int, int);
+void swap(void *, void *, int);
 
 void **malloc_matrix(int, int, int);
 

@@ -68,7 +68,7 @@ PQNode *priority_queue_push(PriorityQueue *pq, const void *element){
 		pq->v[pos]->position = parent(pos);
 		pq->v[parent(pos)]->position = pos;
 
-		swap(pq->v, sizeof(PQNode *), pos, parent(pos));
+		swap(pq->v + pos, pq->v + parent(pos), sizeof(PQNode *));
 
 		pos = parent(pos);
 	}
@@ -108,7 +108,7 @@ void priority_queue_pop(PriorityQueue *pq){
 				pq->v[pos]->position = newpos;
 				pq->v[newpos]->position = pos;
 				
-				swap(pq->v, sizeof(PQNode *), pos, newpos);
+				swap(pq->v + pos, pq->v + newpos, sizeof(PQNode *));
 
 				pos = newpos;
 
@@ -137,7 +137,7 @@ void priority_queue_replace_key(PriorityQueue *pq, const PQNode *ref, const void
 		pq->v[pos]->position = parent(pos);
 		pq->v[parent(pos)]->position = pos;
 
-		swap(pq->v, sizeof(PQNode *), pos, parent(pos));
+		swap(pq->v + pos, pq->v + parent(pos), sizeof(PQNode *));
 
 		pos = parent(pos);
 	}

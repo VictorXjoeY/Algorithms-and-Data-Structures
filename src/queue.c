@@ -10,7 +10,7 @@ typedef struct Node Node;
 struct Node{
 	void *element;
 	Node *next;
-	Node *previous;
+	Node *prev;
 };
 
 struct Queue{
@@ -51,7 +51,7 @@ void queue_delete(Queue *q){
 void queue_push(Queue *q, const void *element){
 	if (q->size){
 		q->back->next = queue_node_new(element, q->element_size);
-		q->back->next->previous = q->back;
+		q->back->next->prev = q->back;
 		q->back = q->back->next;
 	}
 	else{
@@ -80,7 +80,7 @@ void queue_pop(Queue *q){
 	if (q->size){
 		if (q->front->next){
 			q->front = q->front->next;
-			queue_node_delete(q->front->previous);
+			queue_node_delete(q->front->prev);
 		}
 		else{
 			queue_node_delete(q->front);
@@ -107,7 +107,7 @@ Node *queue_node_new(const void *element, int element_size){
 	memcpy(n->element, element, element_size);
 
 	n->next = NULL;
-	n->previous = NULL;
+	n->prev = NULL;
 
 	return n;
 }

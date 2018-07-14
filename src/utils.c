@@ -5,33 +5,15 @@
 #include <string.h>
 #include "utils.h"
 
-/* Checks if the string "str" contains the character "c". */
-bool contains(char *, char);
+void swap(void *a, void *b, int size){
+	void *c;
 
-char *read_stretch(FILE *fp, char *limits){
-    char *stretch = NULL;
-    int i = 0;
-
-    do{
-        stretch = (char *)realloc(stretch, (i + 1) * sizeof(char));
-        fscanf(fp, "%c", stretch + i);
-        i++;
-    }while (!feof(fp) && !contains(limits, stretch[i - 1]));
-
-    stretch[i - 1] = '\0';
-
-    return stretch;
-}
-
-void swap(void *v, int size, int x, int y){
-	void *aux;
-
-	if (x != y){
-		aux = malloc(size);
-		memcpy(aux, v + x * size, size);
-		memcpy(v + x * size, v + y * size, size);
-		memcpy(v + y * size, aux, size);
-		free(aux);
+	if (a != b){
+		c = malloc(size);
+		memcpy(c, a, size);
+		memcpy(a, b, size);
+		memcpy(b, c, size);
+		free(c);
 	}
 }
 
@@ -131,12 +113,4 @@ void print_double(const void *a){
 
 void print_string(const void *a){
 	printf("%s", *((char **)a));
-}
-
-bool contains(char *str, char c){
-	while (*str and *str != c){
-		str++;
-	}
-
-	return *str == c;
 }

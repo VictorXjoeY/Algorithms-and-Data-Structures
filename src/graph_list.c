@@ -3,81 +3,81 @@
 #include <stdlib.h>
 #include <string.h>
 #include "utils.h"
-#include "list.h"
+#include "graph_list.h"
 
+/* Nó da graph_lista. */
 struct Node{
 	Node *prev; // Ponteiro para o nó anterior.
 	Node *next; // Ponteiro para o nó seguinte.
 	void *element; // Valor armazenado no nó.
 };
 
-struct List{
-	Node *front; // Ponteiro para o primeiro nó da lista.
-	Node *back; // Ponteiro para o último nó da lista.
-	int size; // Quantidade de nós na lista.
+struct GraphList{
+	Node *last; // Ponteiro para o último nó da graph_lista.
+	int size; // Quantidade de nós/elementos na graph_lista.
 	int element_size; // Tamanho de cada elemento armazenado em um nó.
 };
 
 /* Creates a node. */
-Node *list_node_create(const void *, int);
+Node *graph_list_node_create(const void *, int);
 
-/* Destroys a node from the List. */
-void list_node_destroy(Node *);
+/* Erases a node from the GraphList. */
+void graph_list_node_destroy(Node *);
 
-List *list_create(int element_size){
-	List *l = (List *)malloc(sizeof(List));
+GraphList *graph_list_create(int element_size){
+	GraphList *l = (GraphList *)malloc(sizeof(GraphList));
 
-	// Inicializando atributos da Lista.
+	// Inicializando atributos da GraphLista.
 	l->element_size = element_size;
-	l->front = l->back = NULL;
+	l->last = NULL;
 	l->size = 0;
 
 	return l;
 }
 
-void list_clear(List *l){
-	Node *aux = l->back;
+void graph_list_clear(GraphList *l){
+	Node *aux = l->last;
 
 	// Enquanto houver nós.
 	while (aux){
 		aux = aux->prev;
-		list_node_destroy(l->back);
-		l->back = aux;
+		graph_list_node_destroy(l->last);
+		l->last = aux;
 	}
 }
 
-void list_destroy(List *l){
+void graph_list_destroy(GraphList *l){
 	if (l){
 		// Removendo todos os nós.
-		list_clear(l);
+		graph_list_clear(l);
 
-		// Liberando a Lista.
+		// Liberando a GraphLista.
 		free(l);
 	}
 }
 
-Node *list_insert(List *l, const void *element){
-	// Se já houver algum nó na Lista.
+Node *graph_list_insert(GraphList *l, const void *element){
+	// Se já houver algum nó na GraphLista.
 	if (l->size){
 		// Linkando o novo nó.
-		l->back->next = list_node_create(element, l->element_size);
-		l->back->next->prev = l->back;
+		l->last->next = graph_list_node_create(element, l->element_size);
+		l->last->next->prev = l->last;
 
 		// Atualizando o ponteiro para o último nó.
-		l->back = l->back->next;
+		l->last = l->last->next;
 	}
 	else{
 		// Inicializando o ponteiro para o último nó.
-		l->front = l->back = list_node_create(element, l->element_size);
+		l->last = graph_list_node_create(element, l->element_size);
 	}
 
 	// Incrementando o contador de nós.
 	l->size++;
 
-	return l->back;
+	return l->last;
 }
 
-void *list_get_element(const List *l, const Node *n){
+void *graph_list_get_element(const GraphList *l, const Node *n){
 	// Alocando uma nova região da memória.
 	void *element = malloc(l->element_size);
 
@@ -88,50 +88,55 @@ void *list_get_element(const List *l, const Node *n){
 	return element;
 }
 
-Node *list_get_next_node(const List *l, const Node *n){
+const void *graph_list_get_element_ro(const GraphList *l, const Node *n){
+	// Retornando o endereço da região da memória que armazena o valor do vértice.
+	return n->element;
+}
+
+Node *graph_list_get_next_node(const GraphList *l, const Node *n){
 	// Se o último parâmetro não for NULL.
 	if (n){
 		// Retorna o nó anterior a ele.
 		return n->prev;
 	}
 
-	// Retorna o último nó da Lista.
-	return l->back;
+	// Retorna o último nó da GraphLista.
+	return l->last;
 }
 
-void list_remove(List *l, Node *n){
+void graph_list_remove(GraphList *l, Node *n){
 	// Linkando o nó anterior e o nó seguinte.
 	if (n->prev and n->next){ // Se houver nó anterior e nó seguinte (nó intermediário).
 		n->prev->next = n->next;
 		n->next->prev = n->prev;
 	}
 	else if (n->prev){ // Se houver apenas nó anterior (último nó).
-		l->back = n->prev;
+		l->last = n->prev;
 		n->prev->next = NULL;
 	}
 	else if (n->next){ // Se houver apenas nó seguinte (primeiro nó).
 		n->next->prev = NULL;
 	}
 	else{ // Se não houver nem nó anterior nem nó seguinte (único nó).
-		l->back = NULL;
+		l->last = NULL;
 	}
 
 	// Apagando o nó.
-	list_node_destroy(n);
+	graph_list_node_destroy(n);
 
 	// Decrementando o contador de nós.
 	l->size--;
 }
 
-bool list_empty(const List *l){
+bool graph_list_empty(const GraphList *l){
 	return !l->size;
 }
 
-int list_size(const List *l){
+int graph_list_size(const GraphList *l){
 	return l->size;
 }
 
-Node *list_node_create(const void *element, int element_size){
+Node *graph_list_node_create(const void *element, int element_size){
 	Node *n = (Node *)malloc(sizeof(Node));
 
 	// Armazenando o elemento no nó.
@@ -145,7 +150,7 @@ Node *list_node_create(const void *element, int element_size){
 	return n;
 }
 
-void list_node_destroy(Node *n){
+void graph_list_node_destroy(Node *n){
 	// Liberando o elemento e o nó.
 	free(n->element);
 	free(n);

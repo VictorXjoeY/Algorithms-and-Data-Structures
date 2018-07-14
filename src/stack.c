@@ -10,7 +10,7 @@ typedef struct Node Node;
 struct Node{
 	void *element;
 	Node *next;
-	Node *previous;
+	Node *prev;
 };
 
 struct Stack{
@@ -20,12 +20,12 @@ struct Stack{
 };
 
 /* Creates a node. */
-Node *stack_node_new(const void *, int);
+Node *stack_node_create(const void *, int);
 
 /* Erases a node from the Stack. */
-void stack_node_delete(Node *);
+void stack_node_destroy(Node *);
 
-Stack *stack_new(int element_size){
+Stack *stack_create(int element_size){
 	Stack *s = (Stack *)malloc(sizeof(Stack));
 
 	s->element_size = element_size;
@@ -41,19 +41,19 @@ void stack_clear(Stack *s){
 	}
 }
 
-void stack_delete(Stack *s){
+void stack_destroy(Stack *s){
 	stack_clear(s);
 	free(s);
 }
 
 void stack_push(Stack *s, const void *element){
 	if (s->size){
-		s->top->next = stack_node_new(element, s->element_size);
-		s->top->next->previous = s->top;
+		s->top->next = stack_node_create(element, s->element_size);
+		s->top->next->prev = s->top;
 		s->top = s->top->next;
 	}
 	else{
-		s->top = stack_node_new(element, s->element_size);
+		s->top = stack_node_create(element, s->element_size);
 	}
 
 	s->size++;
@@ -76,12 +76,12 @@ const void *stack_top_ro(const Stack *s){
 
 void stack_pop(Stack *s){
 	if (s->size){
-		if (s->top->previous){
-			s->top = s->top->previous;
-			stack_node_delete(s->top->next);
+		if (s->top->prev){
+			s->top = s->top->prev;
+			stack_node_destroy(s->top->next);
 		}
 		else{
-			stack_node_delete(s->top);
+			stack_node_destroy(s->top);
 			s->top = NULL;
 		}
 
@@ -97,19 +97,19 @@ int stack_size(const Stack *s){
 	return s->size;
 }
 
-Node *stack_node_new(const void *element, int element_size){
+Node *stack_node_create(const void *element, int element_size){
 	Node *n = (Node *)malloc(sizeof(Node));
 
 	n->element = malloc(element_size);
 	memcpy(n->element, element, element_size);
 
 	n->next = NULL;
-	n->previous = NULL;
+	n->prev = NULL;
 
 	return n;
 }
 
-void stack_node_delete(Node *n){
+void stack_node_destroy(Node *n){
 	free(n->element);
 	free(n);
 }
