@@ -1,152 +1,209 @@
-/* Victor Forbes - 9293394 */
-
 #include <stdlib.h>
-#include <string.h>
-#include "utils.h"
+#include <stdbool.h>
 #include "list.h"
 
 struct Node{
-	Node *prev; // Ponteiro para o nó anterior.
-	Node *next; // Ponteiro para o nó seguinte.
-	void *element; // Valor armazenado no nó.
+	Node *prev, *next;
+	void *element;
 };
 
 struct List{
-	Node *front; // Ponteiro para o primeiro nó da lista.
-	Node *back; // Ponteiro para o último nó da lista.
-	int size; // Quantidade de nós na lista.
-	int element_size; // Tamanho de cada elemento armazenado em um nó.
+	void *(*copy)(const void *);
+	void (*destroy)(void *);
+	Node *front, *back;
+	int size;
 };
 
-/* Creates a node. */
-Node *list_node_create(const void *, int);
-
-/* Destroys a node from the List. */
-void list_node_destroy(Node *);
-
-List *list_create(int element_size){
+List *list_create(void *(*copy)(const void *), void (*destroy)(void *)){
 	List *l = (List *)malloc(sizeof(List));
 
-	// Inicializando atributos da Lista.
-	l->element_size = element_size;
 	l->front = l->back = NULL;
+	l->destroy = destroy;
+	l->copy = copy;
 	l->size = 0;
 
 	return l;
 }
 
 void list_clear(List *l){
-	Node *aux = l->back;
-
-	// Enquanto houver nós.
-	while (aux){
-		aux = aux->prev;
-		list_node_destroy(l->back);
-		l->back = aux;
+	while (!list_empty(l)){
+		list_pop_back(l);
 	}
 }
 
 void list_destroy(List *l){
-	if (l){
-		// Removendo todos os nós.
-		list_clear(l);
-
-		// Liberando a Lista.
-		free(l);
-	}
+	list_clear(l);
+	free(l);
 }
 
-Node *list_insert(List *l, const void *element){
-	// Se já houver algum nó na Lista.
-	if (l->size){
-		// Linkando o novo nó.
-		l->back->next = list_node_create(element, l->element_size);
-		l->back->next->prev = l->back;
+/* Creates a Node containing a copy of the provided element. */
+Node *node_create(void *(*copy)(const void *), const void *element){
+	Node *n = (Node *)malloc(sizeof(Node));
 
-		// Atualizando o ponteiro para o último nó.
-		l->back = l->back->next;
+	n->prev = n->next = NULL;
+	n->element = copy(element);
+
+	return n;
+}
+
+/* Destroys a given Node. */
+void node_destroy(void (*destroy)(void *), Node *n){
+	destroy(n->element);
+	free(n);
+}
+
+Node *list_insert(List *l, const void *element, int pos){
+	Node *u, *v;
+
+	if (0 <= pos && pos <= list_size(l)){
+		if (pos == 0){
+			return list_push_front(l, element);
+		}
+		
+		if (pos == list_size(l)){
+			return list_push_back(l, element);
+		}
+
+		u = node_create(l->copy, element);
+		v = list_at(l, pos - 1);
+
+		u->prev = v;
+		u->next = v->next;
+
+		v->next = u;
+		u->next->prev = u;
+
+		return u;
+	}
+
+	return NULL;
+}
+
+Node *list_push_front(List *l, const void *element){
+	if (list_empty(l)){
+		l->front = l->back = node_create(l->copy, element);
 	}
 	else{
-		// Inicializando o ponteiro para o último nó.
-		l->front = l->back = list_node_create(element, l->element_size);
+		l->front->prev = node_create(l->copy, element);
+		l->front->prev->next = l->front;
+		l->front = l->front->prev;
 	}
 
-	// Incrementando o contador de nós.
+	l->size++;
+
+	return l->front;
+}
+
+Node *list_push_back(List *l, const void *element){
+	if (list_empty(l)){
+		l->front = l->back = node_create(l->copy, element);
+	}
+	else{
+		l->back->next = node_create(l->copy, element);
+		l->back->next->prev = l->back;
+		l->back = l->back->next;
+	}
+
 	l->size++;
 
 	return l->back;
 }
 
-void *list_get_element(const List *l, const Node *n){
-	// Alocando uma nova região da memória.
-	void *element = malloc(l->element_size);
-
-	// Armazenando o valor do nó nessa região.
-	memcpy(element, n->element, l->element_size);
-
-	// Retornando o endereço dessa região.
-	return element;
-}
-
-Node *list_get_next_node(const List *l, const Node *n){
-	// Se o último parâmetro não for NULL.
-	if (n){
-		// Retorna o nó anterior a ele.
-		return n->prev;
+void list_erase(List *l, Node *n){
+	if (l->front == n){
+		list_pop_front(l);
 	}
-
-	// Retorna o último nó da Lista.
-	return l->back;
-}
-
-void list_remove(List *l, Node *n){
-	// Linkando o nó anterior e o nó seguinte.
-	if (n->prev and n->next){ // Se houver nó anterior e nó seguinte (nó intermediário).
+	else if (l->back == n){
+		list_pop_back(l);
+	}
+	else{
 		n->prev->next = n->next;
 		n->next->prev = n->prev;
+		node_destroy(l->destroy, n);
 	}
-	else if (n->prev){ // Se houver apenas nó anterior (último nó).
-		l->back = n->prev;
-		n->prev->next = NULL;
+}
+
+void list_pop_front(List *l){
+	if (list_size(l) == 1){
+		node_destroy(l->destroy, l->front);
+		l->front = l->back = NULL;
 	}
-	else if (n->next){ // Se houver apenas nó seguinte (primeiro nó).
-		n->next->prev = NULL;
-	}
-	else{ // Se não houver nem nó anterior nem nó seguinte (único nó).
-		l->back = NULL;
+	else{
+		l->front = l->front->next;
+		node_destroy(l->destroy, l->front->prev);
+		l->front->prev = NULL;
 	}
 
-	// Apagando o nó.
-	list_node_destroy(n);
-
-	// Decrementando o contador de nós.
 	l->size--;
 }
 
-bool list_empty(const List *l){
-	return !l->size;
+void list_pop_back(List *l){
+	if (list_size(l) == 1){
+		node_destroy(l->destroy, l->back);
+		l->front = l->back = NULL;
+	}
+	else{
+		l->back = l->back->prev;
+		node_destroy(l->destroy, l->back->next);
+		l->back->next = NULL;
+	}
+
+	l->size--;
+}
+
+Node *list_find(const List *l, const void *element, int (*compare)(const void *, const void *)){
+	Node *n = l->front;
+
+	while (n){
+		if (!compare(n->element, element)){
+			return n;
+		}
+
+		n = n->next;
+	}
+
+	return NULL;
+}
+
+Node *list_at(const List *l, int pos){
+	Node *n = l->front;
+
+	if (0 <= pos && pos < list_size(l)){
+		while (pos){
+			n = n->next;
+			pos--;
+		}
+
+		return n;
+	}
+
+	return NULL;
+}
+
+Node *list_front(const List *l){
+	return l->front;
+}
+
+Node *list_back(const List *l){
+	return l->back;
+}
+
+Node *list_next(const List *l, const Node *n){
+	return n->next;
+}
+
+Node *list_prev(const List *l, const Node *n){
+	return n->prev;
+}
+
+void *list_get(const List *l, const Node *n){
+	return l->copy(n->element);
 }
 
 int list_size(const List *l){
 	return l->size;
 }
 
-Node *list_node_create(const void *element, int element_size){
-	Node *n = (Node *)malloc(sizeof(Node));
-
-	// Armazenando o elemento no nó.
-	n->element = malloc(element_size);
-	memcpy(n->element, (void **)element, element_size);
-
-	// Inicializando os ponteiros com NULL.
-	n->next = NULL;
-	n->prev = NULL;
-
-	return n;
-}
-
-void list_node_destroy(Node *n){
-	// Liberando o elemento e o nó.
-	free(n->element);
-	free(n);
+bool list_empty(const List *l){
+	return list_size(l) == 0;
 }

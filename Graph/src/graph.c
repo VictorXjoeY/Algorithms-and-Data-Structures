@@ -233,20 +233,20 @@ Edge **graph_edges(const Graph *g){
 }
 
 void graph_remove_vertex(Graph *g, Vertex *v){
-	Node *next = list_get_next_node(v->adjacent, NULL);
+	Node *next = graph_list_get_next_node(v->adjacent, NULL);
 	Node *prev;
 
 	// Enquanto tiver aresta.
 	while (next){
 		prev = next;
-		next = list_get_next_node(v->adjacent, next);
+		next = graph_list_get_next_node(v->adjacent, next);
 
 		// Removendo a aresta.
-		graph_remove_edge(g, *((Edge **)list_get_element_ro(v->adjacent, prev)));
+		graph_remove_edge(g, *((Edge **)graph_list_get_element_ro(v->adjacent, prev)));
 	}
 
 	// Deletando a lista de arestas incidentes.
-	list_destroy(v->adjacent);
+	graph_list_destroy(v->adjacent);
 
 	// Linkando o vértice anterior e o vértice seguinte.
 	if (v->prev and v->next){ // Se houver vértice anterior e vértice seguinte (vértice intermediário).
@@ -276,8 +276,8 @@ void graph_remove_vertex(Graph *g, Vertex *v){
 
 void graph_remove_edge(Graph *g, Edge *e){
 	// Removendo as referências para a aresta nas listas de adjacência dos vértices finais.
-	list_remove(e->reference_list1, e->reference1);
-	list_remove(e->reference_list2, e->reference2);
+	graph_list_remove(e->reference_list1, e->reference1);
+	graph_list_remove(e->reference_list2, e->reference2);
 
 	// Linkando a aresta anterior e a aresta seguinte.
 	if (e->prev and e->next){ // Se houver aresta anterior e aresta seguinte (aresta intermediária).
@@ -326,8 +326,8 @@ Edge **graph_incident_edges(const Graph *g, const Vertex *v){
 
 		// Armazenando as arestas.
 		for (i = 0; i < n; i++){
-			aux = list_get_next_node(v->adjacent, aux);
-			e[i] = *((Edge **)list_get_element_ro(v->adjacent, aux));
+			aux = graph_list_get_next_node(v->adjacent, aux);
+			e[i] = *((Edge **)graph_list_get_element_ro(v->adjacent, aux));
 		}
 	}
 
@@ -345,9 +345,9 @@ bool graph_are_adjacent(const Graph *g, const Vertex *v, const Vertex *w){
 
 	// Percorrendo a lista de arestas incidentes do vértice com menor grau.
 	if (graph_vertex_degree(g, v) < graph_vertex_degree(g, w)){
-		while ((aux = list_get_next_node(v->adjacent, aux))){
+		while ((aux = graph_list_get_next_node(v->adjacent, aux))){
 			// Recuperando aresta.
-			e = *((Edge **)list_get_element_ro(v->adjacent, aux));
+			e = *((Edge **)graph_list_get_element_ro(v->adjacent, aux));
 
 			// Verificando se o vértice final oposto nessa aresta é o vértice w.
 			if (graph_opposite_vertex(g, v, e) == w){
@@ -356,9 +356,9 @@ bool graph_are_adjacent(const Graph *g, const Vertex *v, const Vertex *w){
 		}
 	}
 	else{
-		while ((aux = list_get_next_node(w->adjacent, aux))){
+		while ((aux = graph_list_get_next_node(w->adjacent, aux))){
 			// Recuperando aresta.
-			e = *((Edge **)list_get_element_ro(w->adjacent, aux));
+			e = *((Edge **)graph_list_get_element_ro(w->adjacent, aux));
 
 			// Verificando se o vértice final oposto nessa aresta é o vértice v.
 			if (graph_opposite_vertex(g, w, e) == v){
@@ -373,7 +373,7 @@ bool graph_are_adjacent(const Graph *g, const Vertex *v, const Vertex *w){
 
 int graph_vertex_degree(const Graph *g, const Vertex *v){
 	// Retornando o tamanho da lista de adjacências do vértice.
-	return list_size(v->adjacent);
+	return graph_list_size(v->adjacent);
 }
 
 int graph_number_of_vertices(const Graph *g){
@@ -444,7 +444,7 @@ Vertex *graph_vertex_new(int id, const void *value, int vertex_value_size){
 	Vertex *v = (Vertex *)malloc(sizeof(Vertex));
 
 	// Criando uma nova lista de adjacência.
-	v->adjacent = list_create(sizeof(Edge *));
+	v->adjacent = graph_list_create(sizeof(Edge *));
 
 	// Atribuindo um Id ao vértice.
 	v->id = id;
@@ -471,8 +471,8 @@ Edge *graph_edge_new(int id, Vertex *v, Vertex *w, const void *value, int edge_v
 	e->reference_list2 = w->adjacent;
 
 	// Inserindo e atribuindo as referências.
-	e->reference1 = list_insert(v->adjacent, &e);
-	e->reference2 = list_insert(w->adjacent, &e);
+	e->reference1 = graph_list_insert(v->adjacent, &e);
+	e->reference2 = graph_list_insert(w->adjacent, &e);
 
 	// Armazenando o valor na aresta.
 	e->value = malloc(edge_value_size);

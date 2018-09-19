@@ -1,118 +1,35 @@
-/* Victor Forbes - 9293394 */
-
-#include <stdlib.h>
-#include <string.h>
-#include "utils.h"
+#include <stdbool.h>
+#include "deque.h"
 #include "queue.h"
 
-typedef struct Node Node;
-
-struct Node{
-	void *element;
-	Node *next;
-	Node *prev;
-};
-
-struct Queue{
-	Node *front;
-	Node *back;
-	int size;
-	int element_size;
-};
-
-/* Creates a node. */
-Node *queue_node_new(const void *, int);
-
-/* Erases a node from the Queue. */
-void queue_node_delete(Node *);
-
-Queue *queue_new(int element_size){
-	Queue *q = (Queue *)malloc(sizeof(Queue));
-
-	q->element_size = element_size;
-	q->front = NULL;
-	q->back = NULL;
-	q->size = 0;
-
-	return q;
+Queue *queue_create(void *(*copy)(const void *), void (*destroy)(void *)){
+	return deque_create(copy, destroy);
 }
 
 void queue_clear(Queue *q){
-	while (q->size){
-		queue_pop(q);
-	}
+	deque_clear(q);
 }
 
-void queue_delete(Queue *q){
-	queue_clear(q);
-	free(q);
+void queue_destroy(Queue *q){
+	deque_destroy(q);
 }
 
 void queue_push(Queue *q, const void *element){
-	if (q->size){
-		q->back->next = queue_node_new(element, q->element_size);
-		q->back->next->prev = q->back;
-		q->back = q->back->next;
-	}
-	else{
-		q->back = q->front = queue_node_new(element, q->element_size);
-	}
-
-	q->size++;
-}
-
-void *queue_front(const Queue *q){
-	void *element = NULL;
-
-	if (q->size){
-		element = malloc(q->element_size);
-		memcpy(element, q->front->element, q->element_size);
-	}
-
-	return element;
-}
-
-const void *queue_front_ro(const Queue *q){
-	return q->size ? q->front->element : NULL;
+	deque_push_back(q, element);
 }
 
 void queue_pop(Queue *q){
-	if (q->size){
-		if (q->front->next){
-			q->front = q->front->next;
-			queue_node_delete(q->front->prev);
-		}
-		else{
-			queue_node_delete(q->front);
-			q->front = NULL;
-			q->back = NULL;
-		}
-
-		q->size--;
-	}
+	deque_pop_front(q);
 }
 
-bool queue_empty(const Queue *q){
-	return !q->size;
+void *queue_front(const Queue *q){
+	return deque_front(q);
 }
 
 int queue_size(const Queue *q){
-	return q->size;
+	return deque_size(q);
 }
 
-Node *queue_node_new(const void *element, int element_size){
-	Node *n = (Node *)malloc(sizeof(Node));
-
-	n->element = malloc(element_size);
-	memcpy(n->element, element, element_size);
-
-	n->next = NULL;
-	n->prev = NULL;
-
-	return n;
-}
-
-void queue_node_delete(Node *n){
-	free(n->element);
-	free(n);
+bool queue_empty(const Queue *q){
+	return deque_empty(q);
 }
