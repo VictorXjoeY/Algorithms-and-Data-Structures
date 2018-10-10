@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "list.h"
 #include "deque.h"
 #include "queue.h"
 #include "stack.h"
 #include "priority_queue.h"
+#include "algorithm.h"
+#include "utils.h"
 
 void *int_copy(const void *a){
 	int *b = (int *)malloc(sizeof(int)); // Allocates memory for an int.
@@ -175,12 +178,37 @@ void priority_queue_test(){
 	priority_queue_destroy(pq);
 }
 
+void sort_test(){
+	int n, i;
+	int *v;
+
+	n = 1000;
+	v = (int *)malloc(n * sizeof(int));
+
+	for (i = 0; i < n; i++){
+		v[i] = rand() % 100;
+	}
+
+	quick_sort(v, n, sizeof(int), int_compare);
+
+	for (i = 1; i < n; i++){
+		if (v[i - 1] > v[i]){
+			printf("ERROR\n");
+		}
+	}
+
+	free(v);
+}
+
 int main(int argc, char *argv[]){
+	srand(time(NULL));
+
+	sort_test();
 	// list_test();
 	// deque_test();
 	// queue_test();
 	// stack_test();
-	priority_queue_test();
+	// priority_queue_test();
 
 	return 0;
 }
