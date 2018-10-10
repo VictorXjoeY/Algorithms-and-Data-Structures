@@ -1,2 +1,2 @@
-# Data-Structures
-Data structures implemented in C.
+# Algorithms-and-Data-Structures
+Algorithms and data structures implemented in C.
