@@ -87,6 +87,7 @@ void bubble_sort(void *v, int n, int size, int (*compare)(const void *, const vo
 			}
 		}
 
+		n--;
 	}while (n > 1 && swapped);
 }
 
