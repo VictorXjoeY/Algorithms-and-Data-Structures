@@ -167,6 +167,21 @@ Node *list_find(const List *l, const void *element, int (*compare)(const void *,
 	return NULL;
 }
 
+int list_count(const List *l, const void *element, int (*compare)(const void *, const void *)){
+	Node *n = l->front;
+	int c = 0;
+
+	while (n){
+		if (!compare(n->element, element)){
+			c++;
+		}
+
+		n = n->next;
+	}
+
+	return c;
+}
+
 Node *list_at(const List *l, int pos){
 	Node *n = l->front;
 

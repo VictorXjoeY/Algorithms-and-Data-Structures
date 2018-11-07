@@ -38,6 +38,9 @@ void list_pop_back(List *);
 /* O(N) - Returns the Node containing the provided element. */
 Node *list_find(const List *, const void *, int (*)(const void *, const void *));
 
+/* O(N) - Returns the number of occurrences of an element. */
+int list_count(const List *, const void *, int (*)(const void *, const void *));
+
 /* O(N) - Returns the Node at the provided position. */
 Node *list_at(const List *, int);
 
