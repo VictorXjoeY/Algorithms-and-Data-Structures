@@ -25,7 +25,7 @@ void trie_erase(Trie *, const char *);
 /* O(|S|) - Counts the number of occurrences of a string in the Trie. */
 int trie_count(const Trie *, const char *);
 
-/* O(1) - Returns the number of the elements in the Trie. */
+/* O(1) - Returns the number of elements in the Trie. */
 int trie_size(const Trie *);
 
 /* O(1) - Returns true if the Trie is empty and false otherwise. */
